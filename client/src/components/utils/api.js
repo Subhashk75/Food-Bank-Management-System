@@ -1,4 +1,4 @@
-export const API_BASE = 'https://food-bank-management-system-1.onrender.com//api/v1';
+export const API_BASE = 'https://food-bank-management-system-1.onrender.com/api/v1';
 
 const apiRequest = async (endpoint, method, data = null) => {
   const url = `${API_BASE}${endpoint}`;
