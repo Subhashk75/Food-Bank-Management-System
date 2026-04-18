@@ -1,4 +1,4 @@
-export const API_BASE = 'http://localhost:3001/api/v1';
+export const API_BASE = 'http://localhost:3000/api/v1';
 
 const apiRequest = async (endpoint, method, data = null) => {
   const url = `${API_BASE}${endpoint}`;

@@ -18,6 +18,7 @@ app.use(cors({
   credentials: true
 }));
 
+const _dirname = path.resolve();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -28,14 +29,11 @@ app.use('/api/v1/transaction' , transactionRoute);
 app.use('/api/v1/inventory' , inventoryRoute);
 app.use('/api/v1/categories' ,categoriesRoute );
 
-console.log(PORT);
-// Static files in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
-  });
-}
+ 
+app.use(express.static(path.join(_dirname , "/client/build")));
+app.get('*' , (req,res)=>{
+   res.sendFile(path.resolve(_dirname , "client" , "build" , "index.html"));
+})
 
 // Database connection
 db.once('open', () => {

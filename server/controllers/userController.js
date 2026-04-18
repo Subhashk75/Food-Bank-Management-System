@@ -39,11 +39,11 @@ const registerUser = async (req, res, next) => {
     user.password = password;
     user.isVerified = true;
     user.Otp = null;
-    console.log(isFirstUser);
+    e.log(isFirstUser);
     
     // ✅ Fix: assign admin if first user
     user.role = isFirstUser ? 'admin' : (role || 'staff');
-       console.log(user?.role)
+       e.log(user?.role)
     await user.save();
 
     const token = signToken(user);

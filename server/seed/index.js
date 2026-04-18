@@ -40,10 +40,10 @@ connection.once('open', async () => {
 
         const createdProducts = await Product.insertMany(productsWithCategory);
 
-        console.log('Created Categories:', createdCategories);
-        console.log('Created Products:', createdProducts);
+        // console.log('Created Categories:', createdCategories);
+        // console.log('Created Products:', createdProducts);
         
-        console.log('Database seeded successfully.');
+        // console.log('Database seeded successfully.');
     } catch (error) {
         console.error('Error seeding database:', error);
     } finally {

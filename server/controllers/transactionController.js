@@ -11,7 +11,6 @@ const getAllTransactions = async (req, res) => {
           .sort({ createdAt: -1 });
 
      
-      console.log(transactions);
     res.status(200).json({
       success: true,
       count: transactions.length,

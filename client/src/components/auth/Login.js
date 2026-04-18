@@ -34,7 +34,6 @@ const Login = () => {
 
     try {
       const response = await authService.login(formState);
-      console.log(response)
       if (response.success) {
         Auth.login(response.token);
         toast({

@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/static/css/main.aad85692.css",
+    "main.js": "/static/js/main.06e21f9f.js",
+    "static/media/girl-apples.png": "/static/media/girl-apples.2f68f77942aa50843df1.png",
+    "static/media/placeholder-product.png": "/static/media/placeholder-product.6ba27ba37bfd667805b1.png",
+    "static/media/FoodLogo.jpg": "/static/media/FoodLogo.0fdada0f7350179692a5.jpg",
+    "index.html": "/index.html",
+    "main.aad85692.css.map": "/static/css/main.aad85692.css.map",
+    "main.06e21f9f.js.map": "/static/js/main.06e21f9f.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.aad85692.css",
+    "static/js/main.06e21f9f.js"
+  ]
+}
