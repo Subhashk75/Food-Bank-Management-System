@@ -1,6 +1,7 @@
 const { User } = require('../models/User');
 const { signToken } = require('../utils/auth');
 const sendMail = require('../utils/emailConfig');
+const bcrypt = require("bcrypt");
 
 const getOtpUser = async (req, res, next) => {
   try {
@@ -22,33 +23,47 @@ const getOtpUser = async (req, res, next) => {
   }
 };
 
+
 const registerUser = async (req, res, next) => {
   try {
     const { username, email, password, verificationCode, role } = req.body;
-    if (!username || !email || !password || !verificationCode)
+
+    if (!username || !email || !password || !verificationCode) {
       return res.status(400).json({ message: 'All fields required.' });
-    // check if first user then role assign as " admin"
-     const isFirstUser = (await User.countDocuments({ isVerified: true })) === 0;
+    }
 
-     // verification of otp 
+    const isFirstUser = (await User.countDocuments({ isVerified: true })) === 0;
+
     const user = await User.findOne({ email, Otp: verificationCode });
-    if (!user) return res.status(400).json({ message: 'Invalid OTP.' });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid OTP.' });
+    }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     user.username = username;
-    user.password = password;
+    user.password = hashedPassword;
     user.isVerified = true;
     user.Otp = null;
-    e.log(isFirstUser);
-    
-    // ✅ Fix: assign admin if first user
+
+    console.log("Is First User:", isFirstUser);
+
     user.role = isFirstUser ? 'admin' : (role || 'staff');
-       e.log(user?.role)
+
+    console.log("Assigned Role:", user.role);
+
     await user.save();
 
     const token = signToken(user);
-    res.status(201).json({ token, data: { id: user._id, username, email, role: user.role } ,success:true});
+
+    res.status(201).json({
+      success: true,
+      token,
+      data: { id: user._id, username, email, role: user.role }
+    });
+
   } catch (err) {
+    console.error("REGISTER ERROR:", err);
     next(err);
   }
 };
