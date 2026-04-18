@@ -13,7 +13,7 @@ const inventoryRoute = require("./routes/inventory")
 const categoriesRoute = require("./routes/category")
 // Middleware
 app.use(cors({
-  origin: 'https://food-bank-management-system-1.onrender.com/',
+  origin: 'https://food-bank-management-system-1.onrender.com',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
 }));
