@@ -36,6 +36,9 @@ const createInventoryItem = async (req, res) => {
   try {
     const { productId, quantity, unit, purpose, batchSize } = req.body;
     const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
 
     // Step 1: Validate input
     if (!productId || !quantity || !purpose) {
@@ -91,7 +94,9 @@ const createInventoryItem = async (req, res) => {
     });
 
   } catch (error) {
-    await session.abortTransaction();
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     console.error('Error creating inventory item:', error);
     res.status(500).json({
       success: false,
@@ -114,7 +119,10 @@ const receiveInventory = async (req, res) => {
 
   try {
     const { products, unit, purpose, batchSize } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
 
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ success: false, message: 'Products array is required' });
@@ -185,7 +193,9 @@ const receiveInventory = async (req, res) => {
       }
     });
   } catch (error) {
-    await session.abortTransaction();
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     console.error("Receive inventory failed:", error);
     res.status(500).json({
       success: false,

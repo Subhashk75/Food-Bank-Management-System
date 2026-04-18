@@ -5,11 +5,11 @@ const transactionSchema = new Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
-    required: true
+    required: false // Changed to optional for multi-item distributions
   },
   quantity: {
     type: Number,
-    required: true,
+    required: false, // Changed to optional for multi-item distributions
     min: 1
   },
   unit: {
@@ -19,18 +19,38 @@ const transactionSchema = new Schema({
   },
   purpose: {
     type: String,
-    required: true
+    required: false // Replaced by distributedTo in new format, kept for compatibility
   },
   batchSize: {
     type: String,
-    required: false // Made optional for single transactions
+    required: false
   },
- // In your Transaction model
-   operation: {
-      type: String,
-      enum: ['Receive', 'Distribute'],
-      default: 'Distribute' // Add default value
-    },
+  // New fields for multi-product distribution
+  items: [
+    {
+      productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+      name: String,
+      quantity: Number
+    }
+  ],
+  distributedTo: {
+    type: String,
+    required: false
+  },
+  distributedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false
+  },
+  date: {
+    type: Date,
+    default: Date.now
+  },
+  operation: {
+    type: String,
+    enum: ['Receive', 'Distribute'],
+    default: 'Distribute'
+  },
   status: {
     type: String,
     enum: ['pending', 'completed', 'failed'],

@@ -1,8 +1,11 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ChakraProvider, ColorModeScript, CSSReset } from '@chakra-ui/react';
 
 import theme from "./theme";
+
+// Layout
+import DashboardLayout from "./components/layout/DashboardLayout";
 
 // Auth Pages
 import Login from "./components/auth/Login";
@@ -23,43 +26,39 @@ import ProductList from './pages/productlist';
 import AddItem from './pages/additem';
 import ModifyItem from './pages/modifyitem';
 
-
 function App() {
   return (
     <ChakraProvider theme={theme}>
-      <ColorModeScript initialColorMode="light" />
+      <ColorModeScript initialColorMode={theme.config?.initialColorMode || "light"} />
       <CSSReset />
       <Router>
-        <div className="flex-column justify-center align-center min-100-vh bg-primary">
-          <Routes>
-            {/* Auth Routes */}
-            <Route path="/" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+        <Routes>
+          {/* Auth Routes */}
+          <Route path="/" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-            {/* Admin & Management */}
+          {/* Protected Routes with DashboardLayout */}
+          <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/distribution" element={<Distribution />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/inputs" element={<Inputs />} />
             <Route path="/output" element={<Output />} />
 
-            {/* Product & Transactions */}
             <Route path="/productlist" element={<ProductList />} />
             <Route path="/additem" element={<AddItem />} />
             <Route path="/modifyitem" element={<ModifyItem />} />
             <Route path="/modifyitem/:productId" element={<ModifyItem />} />
 
-           
-
             {/* Static Pages */}
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/aboutus" element={<AboutUs />} />
+          </Route>
 
-            {/* 404 Route */}
-            <Route path="*" element={<h1>Page Not Found</h1>} />
-          </Routes>
-        </div>
+          {/* 404 Route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </Router>
     </ChakraProvider>
   );

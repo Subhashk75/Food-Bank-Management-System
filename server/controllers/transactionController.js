@@ -57,57 +57,86 @@ const getTransactionById = async (req, res) => {
 // @desc    Create new transaction (Distribute or Receive)
 // @route   POST /api/v1/transactions
 const createTransaction = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    const { product, quantity, unit, operation, purpose, batchSize } = req.body;
+    let { product, quantity, unit, operation, purpose, batchSize, items, distributedTo } = req.body;
 
-    // Validate required fields
-    if (!product || !quantity || !unit || !operation || !purpose) {
-      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    // Backward compatibility: If single product format, convert to items array
+    if (product && quantity && (!items || items.length === 0)) {
+      items = [{ productId: product, name: 'Legacy Product', quantity }];
+      distributedTo = purpose;
     }
 
-    // Validate operation type
-    if (!['Distribute', 'Receive'].includes(operation)) {
-      return res.status(400).json({ success: false, message: 'Invalid operation type' });
+    if (!operation || !['Distribute', 'Receive'].includes(operation)) {
+      await session.abortTransaction();
+      return res.status(400).json({ success: false, message: 'Invalid or missing operation type' });
     }
 
-    const productDoc = await Product.findById(product);
-    if (!productDoc) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
+    if (!items || items.length === 0) {
+      await session.abortTransaction();
+      return res.status(400).json({ success: false, message: 'No items provided for transaction' });
     }
 
-    // Map units to base quantities
+    const transactionItems = [];
     const unitMap = { pcs: 1, kg: 1, g: 0.001, l: 1, ml: 0.001, box: 10, pack: 5 };
     const multiplier = unitMap[unit] || 1;
-    const quantityInBase = quantity * multiplier;
 
-    // Check for sufficient stock in distribution
-    if (operation === 'Distribute' && productDoc.quantity < quantityInBase) {
-      return res.status(400).json({
-        success: false,
-        message: `Insufficient stock. Available: ${productDoc.quantity}, Needed: ${quantityInBase}`
+    // Step 1: Validation and Data Preparation
+    for (const item of items) {
+      const productDoc = await Product.findById(item.productId).session(session);
+      if (!productDoc) {
+        throw new Error(`Product not found: ${item.productId}`);
+      }
+
+      const quantityInBase = Number(item.quantity) * multiplier;
+
+      // Check for sufficient stock only in distribution
+      if (operation === 'Distribute' && productDoc.quantity < quantityInBase) {
+        throw new Error(`Insufficient stock for ${productDoc.name}. Available: ${productDoc.quantity}, Needed: ${quantityInBase}`);
+      }
+
+      transactionItems.push({
+        productId: productDoc._id,
+        name: productDoc.name,
+        quantity: item.quantity,
+        baseQuantity: quantityInBase // tracking for internal use if needed
       });
     }
 
-    // Create transaction
-    const transaction = await Transaction.create({
-      product,
-      quantity,
+    // Step 2: Atomic Inventory Update
+    for (const tItem of transactionItems) {
+      const quantityChange = operation === 'Distribute' ? -tItem.baseQuantity : tItem.baseQuantity;
+      await Product.findByIdAndUpdate(
+        tItem.productId,
+        { $inc: { quantity: quantityChange } },
+        { session }
+      );
+    }
+
+    // Step 3: Create Transaction Record
+    const transaction = await Transaction.create([{
+      product: transactionItems.length === 1 ? transactionItems[0].productId : null, // legacy field
+      quantity: transactionItems.length === 1 ? transactionItems[0].quantity : null, // legacy field
       unit,
       operation,
-      purpose,
-      batchSize: batchSize || null, // optional
+      purpose: distributedTo || purpose, // legacy field
+      batchSize: batchSize || null,
+      items: transactionItems.map(i => ({ productId: i.productId, name: i.name, quantity: i.quantity })),
+      distributedTo: distributedTo || purpose,
+      distributedBy: req.user ? req.user.id : null,
       status: 'completed'
-    });
+    }], { session });
 
-    // Update product quantity
-    const quantityChange = operation === 'Distribute' ? -quantityInBase : quantityInBase;
-    await Product.findByIdAndUpdate(product, { $inc: { quantity: quantityChange } });
-
-    return res.status(201).json({ success: true, data: transaction });
+    await session.commitTransaction();
+    return res.status(201).json({ success: true, data: transaction[0] });
 
   } catch (err) {
+    await session.abortTransaction();
     console.error("Transaction Error:", err);
-    return res.status(500).json({ success: false, message: 'Transaction creation failed', error: err.message });
+    return res.status(500).json({ success: false, message: err.message || 'Transaction creation failed' });
+  } finally {
+    session.endSession();
   }
 };
 

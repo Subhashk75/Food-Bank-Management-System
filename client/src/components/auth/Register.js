@@ -1,7 +1,7 @@
 'use client';
 import {
   Flex, Box, FormControl, FormLabel, Input, Stack, Button,
-  Heading, Text, Link, useToast
+  Heading, Text, Link, useToast, useColorModeValue, Select
 } from '@chakra-ui/react';
 import { Link as ReactRouterLink, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -22,6 +22,10 @@ export default function SignupCard() {
   const navigate = useNavigate();
   const toast = useToast();
 
+  const bgImageOverlay = useColorModeValue('gray.50', 'gray.800');
+  const cardBg = useColorModeValue('white', 'gray.700');
+  const borderColor = useColorModeValue('gray.100', 'gray.600');
+
   useEffect(() => {
     if (Auth.loggedIn()) {
       navigate('/dashboard');
@@ -41,8 +45,6 @@ export default function SignupCard() {
         { email: formState.email },
         { withCredentials: true }
       );
-         console.log("this is inside of handle get Otp", otpPhase);
-        console.log(response);
       if (response.status === 200 && response.data.success) {
         setOtpPhase(true);
         toast({
@@ -50,12 +52,11 @@ export default function SignupCard() {
           status: 'success',
           duration: 3000,
           isClosable: true,
+          position: 'top-right'
         });
       } else {
         throw new Error(response.data.message || 'Failed to send OTP');
       }
-
-      console.log("this is inside of handle get Otp", otpPhase);
     } catch (error) {
       toast({
         title: 'Error',
@@ -63,12 +64,11 @@ export default function SignupCard() {
         status: 'error',
         duration: 3000,
         isClosable: true,
+        position: 'top-right'
       });
     } finally {
       setIsLoading(false);
     }
-
-    console.log("inside error in handlegetOtp" ,otpPhase);
   };
 
  const handleSubmit = async (e) => {
@@ -92,7 +92,6 @@ export default function SignupCard() {
       { withCredentials: true }
     );
      
-    console.log(response)
     if (response.data.success) {
       Auth.login(response.data.token);
       
@@ -104,6 +103,7 @@ export default function SignupCard() {
         status: 'success',
         duration: 3000,
         isClosable: true,
+        position: 'top-right'
       });
       navigate('/dashboard');
     } else {
@@ -116,98 +116,115 @@ export default function SignupCard() {
       status: 'error',
       duration: 5000,
       isClosable: true,
+        position: 'top-right'
     });
   } finally {
     setIsLoading(false);
   }
 };
 
-
   return (
-    <Flex minH={'100vh'} minW={'70vw'} align={'center'} justify={'center'} bg="gray.50">
-      <Stack spacing={8} mx={'auto'} maxW={'lg'} py={12} px={6}>
-        <Stack align={'center'}>
-          <Heading fontSize={'4xl'}>Sign up</Heading>
-          <Text fontSize={'lg'}>To start helping! ✌️</Text>
+    <Flex minH={'100vh'} align={'center'} justify={'center'} bg={bgImageOverlay}>
+      <Stack spacing={8} mx={'auto'} w={'full'} maxW={'md'} py={12} px={6}>
+        <Stack align={'center'} spacing={3}>
+          <Heading fontSize={'3xl'} fontWeight="extrabold">Create an account</Heading>
+          <Text fontSize={'lg'} color={'gray.500'}>
+            To start helping the community ✌️
+          </Text>
         </Stack>
-        <Box rounded={'lg'} bg="white" boxShadow={'lg'} p={8}>
+        <Box 
+          rounded={'xl'} 
+          bg={cardBg} 
+          boxShadow={'xl'} 
+          p={8} 
+          border="1px" 
+          borderColor={borderColor}
+        >
           <form onSubmit={handleSubmit}>
             <Stack spacing={4}>
-              <FormControl id="username" isRequired>
-                <FormLabel>Username</FormLabel>
+              <FormControl id="username" isRequired isDisabled={otpPhase}>
+                <FormLabel fontWeight="600">Username</FormLabel>
                 <Input
                   type="text"
                   name="username"
                   value={formState.username}
                   onChange={handleChange}
+                  size="lg"
+                  borderRadius="md"
                 />
               </FormControl>
 
-              <FormControl id="email" isRequired>
-                <FormLabel>Email address</FormLabel>
+              <FormControl id="email" isRequired isDisabled={otpPhase}>
+                <FormLabel fontWeight="600">Email address</FormLabel>
                 <Input
                   type="email"
                   name="email"
                   value={formState.email}
                   onChange={handleChange}
+                  size="lg"
+                  borderRadius="md"
                 />
               </FormControl>
 
-              <FormControl id="password" isRequired>
-                <FormLabel>Password</FormLabel>
+              <FormControl id="password" isRequired isDisabled={otpPhase}>
+                <FormLabel fontWeight="600">Password</FormLabel>
                 <Input
                   type="password"
                   name="password"
                   value={formState.password}
                   onChange={handleChange}
+                  size="lg"
+                  borderRadius="md"
                 />
               </FormControl>
 
-              <FormControl id="role" isRequired>
-                <FormLabel>Select Role</FormLabel>
-                <select
+              <FormControl id="role" isRequired isDisabled={otpPhase}>
+                <FormLabel fontWeight="600">Select Role</FormLabel>
+                <Select
                   name="role"
                   value={formState.role}
                   onChange={handleChange}
-                  style={{
-                    padding: '8px',
-                    borderRadius: '4px',
-                    border: '1px solid #CBD5E0'
-                  }}
+                  size="lg"
+                  borderRadius="md"
                 >
                   <option value="volunteer">Volunteer</option>
                   <option value="staff">Staff</option>
-                </select>
+                </Select>
               </FormControl>
+
               {otpPhase && (
                 <FormControl id="verificationCode" isRequired>
-                  <FormLabel>OTP</FormLabel>
+                  <FormLabel fontWeight="600">Verification OTP</FormLabel>
                   <Input
                     type="text"
                     name="verificationCode"
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value)}
+                    size="lg"
+                    borderRadius="md"
+                    placeholder="Enter code from email"
                   />
                 </FormControl>
               )}
 
-              <Stack spacing={10} pt={2}>
+              <Stack spacing={10} pt={4}>
                 <Button
                   size="lg"
-                  bg={'blue.400'}
+                  bg={'brand.500'}
                   color={'white'}
                   type="submit"
                   isLoading={isLoading}
                   loadingText={otpPhase ? 'Verifying OTP...' : 'Sending OTP...'}
-                  _hover={{ bg: 'blue.500' }}
+                  _hover={{ bg: 'brand.600' }}
+                  boxShadow="md"
                 >
                   {otpPhase ? 'Submit OTP & Sign Up' : 'Get OTP'}
                 </Button>
               </Stack>
 
-              <Stack pt={6}>
-                <Text align={'center'}>
-                  Already a user? <Link color={'blue.400'} as={ReactRouterLink} to='/'>Login</Link>
+              <Stack pt={4}>
+                <Text align={'center'} color="gray.500">
+                  Already a user? <Link color={'brand.500'} fontWeight="bold" as={ReactRouterLink} to='/'>Login</Link>
                 </Text>
               </Stack>
             </Stack>

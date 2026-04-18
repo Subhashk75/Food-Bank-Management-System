@@ -8,29 +8,31 @@ import {
   SimpleGrid,
   Text,
   useColorModeValue,
-  useBreakpointValue,
   VStack,
   HStack,
   useToast,
-  Spinner,
   Center,
   Alert,
-  AlertIcon
+  AlertIcon,
+  Skeleton,
+  Heading,
+  Divider,
+  Badge
 } from '@chakra-ui/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaTrash } from 'react-icons/fa';
-import { MdOutlineModeEdit } from 'react-icons/md';
-import Header from '../layout/Header';
-import Sidebar from '../layout/Sidebar';
-import Footer from '../layout/Footer';
+import { MdOutlineModeEdit, MdAdd } from 'react-icons/md';
 import { productService } from '../utils/api';
 import Auth from '../utils/auth';
+import placeholderProduct from '../../assets/placeholder-product.png';
 
 function InventoryManagement() {
-  const bg = useColorModeValue("white", "gray.800");
-  const isMobile = useBreakpointValue({ base: true, md: false });
+  const bg = useColorModeValue("white", "gray.700");
+  const borderColor = useColorModeValue("gray.200", "gray.600");
+  const headerCol = useColorModeValue('gray.800', 'white');
   const toast = useToast();
   const navigate = useNavigate();
+  
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,7 +40,7 @@ function InventoryManagement() {
 
   useEffect(() => {
     if (!Auth.loggedIn()) {
-      navigate("/login");
+      navigate("/");
       return;
     }
     fetchProducts();
@@ -49,8 +51,7 @@ function InventoryManagement() {
       setLoading(true);
       setError(null);
       const response = await productService.getAll();
-      console.log(response);
-      if (response.success) {
+      if (response.success || response.data) {
         setProducts(response.data || []);
       } else {
         throw new Error(response.message || 'Failed to fetch products');
@@ -109,76 +110,91 @@ function InventoryManagement() {
   };
 
   const renderLoadingState = () => (
-    <Flex direction="column" minHeight="100vh">
-      <Header />
-      <Flex as="main" flex="1" p={4}>
-        <Sidebar />
-        <Center flex="1">
-          <Spinner size="xl" thickness="4px" emptyColor="gray.200" color="blue.500" />
-        </Center>
-      </Flex>
-      <Footer />
-    </Flex>
+    <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing={6}>
+      {[1, 2, 3, 4, 5, 6].map(i => (
+        <Box key={i} p={4} bg={bg} borderRadius="xl" shadow="sm" border="1px" borderColor={borderColor}>
+          <Skeleton height="150px" borderRadius="md" mb={4} />
+          <Skeleton height="20px" width="70%" mb={2} />
+          <Skeleton height="20px" width="40%" mb={4} />
+          <HStack>
+            <Skeleton height="32px" width="80px" />
+            <Skeleton height="32px" width="32px" />
+          </HStack>
+        </Box>
+      ))}
+    </SimpleGrid>
   );
 
   const renderErrorState = () => (
-    <Flex direction="column" minHeight="100vh">
-      <Header />
-      <Flex as="main" flex="1" p={4}>
-        <Sidebar />
-        <Center flex="1">
-          <Alert status="error" borderRadius="md" maxW="md">
-            <AlertIcon />
-            <Box>
-              <Text fontWeight="bold">Error loading products</Text>
-              <Text>{error}</Text>
-              <Button mt={3} colorScheme="red" onClick={fetchProducts}>
-                Retry
-              </Button>
-            </Box>
-          </Alert>
-        </Center>
-      </Flex>
-      <Footer />
-    </Flex>
+    <Center py={10}>
+      <Alert status="error" borderRadius="md" maxW="md">
+        <AlertIcon />
+        <Box>
+          <Text fontWeight="bold">Error loading products</Text>
+          <Text>{error}</Text>
+          <Button mt={3} colorScheme="red" onClick={fetchProducts}>
+            Retry
+          </Button>
+        </Box>
+      </Alert>
+    </Center>
   );
 
   const renderEmptyState = () => (
-    <Center h="200px" flexDirection="column">
-      <Text fontSize="lg" mb={4}>No products found in inventory</Text>
-      <Button as={Link} to="/additem" colorScheme="green">
+    <Center h="300px" flexDirection="column" bg={bg} borderRadius="xl" border="1px dashed" borderColor={borderColor}>
+      <Text fontSize="lg" color="gray.500" mb={4}>No products found in inventory</Text>
+      <Button as={Link} to="/additem" colorScheme="brand" leftIcon={<MdAdd />}>
         Add Your First Product
       </Button>
     </Center>
   );
 
   const renderProductCard = (product) => (
-    <Box key={product._id} p={4} bg="gray.50" borderRadius="lg" shadow="md" _hover={{ shadow: 'lg' }}>
-      <VStack spacing={3} align="center">
-        <Image 
-          src={product.image || '/placeholder-product.png'} 
-          alt={product.name} 
-          boxSize="120px" 
-          objectFit="cover" 
-          borderRadius="md"
-          fallbackSrc="/placeholder-product.png"
-        />
-        <Text fontSize="lg" fontWeight="bold" textAlign="center">{product.name}</Text>
-        {!isMobile && (
-          <Text fontSize="sm" noOfLines={2} textAlign="center">
+    <Box 
+      key={product._id} 
+      p={5} 
+      bg={bg} 
+      borderRadius="xl" 
+      shadow="sm" 
+      border="1px" 
+      borderColor={borderColor}
+      transition="all 0.2s"
+      _hover={{ shadow: 'md', transform: 'translateY(-2px)' }}
+    >
+      <VStack spacing={4} align="stretch">
+        <Box position="relative">
+          <Image 
+            src={product.image || placeholderProduct} 
+            alt={product.name} 
+            w="100%"
+            h="160px"
+            objectFit="cover" 
+            borderRadius="md"
+            fallbackSrc={placeholderProduct}
+          />
+          <Badge position="absolute" top={2} right={2} colorScheme={product.quantity > 10 ? 'green' : 'red'}>
+            {product.quantity || 0} in stock
+          </Badge>
+        </Box>
+        
+        <Box>
+          <Text fontSize="lg" fontWeight="bold" noOfLines={1} title={product.name}>{product.name}</Text>
+          <Text fontSize="sm" color="gray.500" noOfLines={2} mt={1} h="40px">
             {product.description || 'No description available'}
           </Text>
-        )}
-        <Text fontSize="md" fontWeight="semibold">
-          Quantity: {product.quantity || 0}
-        </Text>
-        <HStack spacing={3} mt={2}>
+        </Box>
+        
+        <Divider />
+
+        <HStack justify="space-between">
           <Button 
             as={Link} 
             to={`/modifyitem/${product._id}`} 
             leftIcon={<MdOutlineModeEdit />} 
-            colorScheme="blue"
+            colorScheme="brand"
+            variant="outline"
             size="sm"
+            flex={1}
             isLoading={isDeleting}
           >
             Edit
@@ -187,6 +203,7 @@ function InventoryManagement() {
             aria-label={`Delete ${product.name}`}
             icon={<FaTrash />}
             colorScheme="red"
+            variant="ghost"
             size="sm"
             onClick={() => handleDelete(product._id)}
             isLoading={isDeleting}
@@ -197,39 +214,31 @@ function InventoryManagement() {
     </Box>
   );
 
-  if (loading) return renderLoadingState();
-  if (error) return renderErrorState();
-
   return (
-    <Flex direction="column" minHeight="100vh">
-      <Header />
-      <Flex as="main" flex="1" p={4}>
-        <Sidebar />
-        <Box flex="1" ml={{ base: 0, md: 4 }} p={5} bg={bg} borderRadius="md" boxShadow="sm">
-          {products.length === 0 ? (
-            renderEmptyState()
-          ) : (
-            <>
-              <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing={5}>
-                {products.map(renderProductCard)}
-              </SimpleGrid>
-              <Flex justifyContent="center" mt={6}>
-                <Button 
-                  as={Link} 
-                  to="/additem" 
-                  colorScheme="green" 
-                  size="lg"
-                  leftIcon={<MdOutlineModeEdit />}
-                >
-                  Add New Item
-                </Button>
-              </Flex>
-            </>
-          )}
-        </Box>
+    <Box>
+      <Flex justify="space-between" align="center" mb={6} flexWrap="wrap" gap={4}>
+        <Heading size="lg" color={headerCol}>
+          Inventory Management
+        </Heading>
+        <Button 
+          as={Link} 
+          to="/additem" 
+          colorScheme="brand" 
+          leftIcon={<MdAdd />}
+          shadow="sm"
+        >
+          Add New Item
+        </Button>
       </Flex>
-      <Footer />
-    </Flex>
+
+      {loading ? renderLoadingState() : 
+       error ? renderErrorState() : 
+       products.length === 0 ? renderEmptyState() : (
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4, xl: 5 }} spacing={6}>
+          {products.map(renderProductCard)}
+        </SimpleGrid>
+      )}
+    </Box>
   );
 }
 

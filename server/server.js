@@ -1,9 +1,11 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+require('dotenv').config();
+
 const db = require('./config/connection');
 const userRoute = require("./routes/user")
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT 
 const app = express();
 const productRoute = require("./routes/product");
 const transactionRoute = require("./routes/transaction")
@@ -26,7 +28,7 @@ app.use('/api/v1/transaction' , transactionRoute);
 app.use('/api/v1/inventory' , inventoryRoute);
 app.use('/api/v1/categories' ,categoriesRoute );
 
-
+console.log(PORT);
 // Static files in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));
@@ -40,4 +42,4 @@ db.once('open', () => {
   app.listen(PORT, () => {
     console.log(`API server running on port ${PORT}!`);
   });
-});
+}); 

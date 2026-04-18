@@ -2,23 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { 
   Input, 
   Button, 
-  Flex, 
   Box, 
   List, 
   ListItem, 
   useColorModeValue,
   useToast,
-  Text
+  Text,
+  Heading,
+  FormControl,
+  FormLabel,
+  Flex,
+  Icon
 } from '@chakra-ui/react';
-import Header from '../layout/Header';
-import Sidebar from '../layout/Sidebar';
-import Footer from '../layout/Footer';
+import { MdCallMade, MdSearch } from 'react-icons/md';
 import { productService } from '../utils/api';
 import Auth from '../utils/auth';
 import { useNavigate } from 'react-router-dom';
 
 function RegisterProductOutput() {
-  const bg = useColorModeValue("white", "gray.800");
+  const cardBg = useColorModeValue('white', 'gray.700');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const headerTextCol = useColorModeValue('gray.800', 'white');
+  const inputBg = useColorModeValue('gray.50', 'gray.600');
+  const dropdownBg = useColorModeValue('white', 'gray.700');
+  const hoverBg = useColorModeValue('gray.50', 'gray.600');
+  
   const [productName, setProductName] = useState('');
   const [productId, setProductId] = useState('');
   const [outputQuantity, setOutputQuantity] = useState('');
@@ -35,7 +43,7 @@ function RegisterProductOutput() {
     const fetchProducts = async () => {
       try {
         const response = await productService.getAll();
-        setSuggestions(response.data);
+        setSuggestions(response.data || []);
       } catch (error) {
         toast({
           title: 'Error',
@@ -61,7 +69,7 @@ function RegisterProductOutput() {
 
     try {
       const response = await productService.search(value);
-      setSuggestions(response.data);
+      setSuggestions(response.data || []);
     } catch (error) {
       toast({
         title: 'Error',
@@ -95,7 +103,7 @@ function RegisterProductOutput() {
     setIsLoading(true);
 
     try {
-      const response = await productService.updateQuantity(
+      await productService.updateQuantity(
         productId,
         {
           quantity: parseInt(outputQuantity),
@@ -128,73 +136,101 @@ function RegisterProductOutput() {
   };
 
   return (
-    <Flex direction="column" minHeight="100vh">
-      <Header />
-      <Flex as="main" flex="1" p={4}>
-        <Sidebar />
-        <Box 
-          bg={bg} 
-          borderRadius="md" 
-          flex="1" 
-          p={5}
-          boxShadow="md"
-        >
-          <Text fontSize="xl" fontWeight="bold" mb={4}>Register Product Output</Text>
-          
-          <Input
-            placeholder="Type product name"
-            value={productName}
-            onChange={handleProductNameChange}
-            mb={2}
-          />
+    <Box>
+      <Heading size="lg" mb={6} color={headerTextCol}>
+        Record Spoilage / Output
+      </Heading>
 
-          {suggestions.length > 0 && productName && (
+      <Box 
+        bg={cardBg} 
+        borderRadius="xl" 
+        shadow="sm" 
+        border="1px" 
+        borderColor={borderColor} 
+        p={8} 
+        maxW="600px" 
+        mx="auto"
+      >
+        <Heading size="md" mb={6} display="flex" alignItems="center">
+          <Icon as={MdCallMade} mr={2} color="red.500" />
+          Deduct Stock Quantity
+        </Heading>
+        
+        <Box position="relative" mb={4}>
+          <FormControl>
+            <FormLabel fontWeight="600">Target Product</FormLabel>
+            <Flex align="center" bg={inputBg} borderRadius="md" px={3} border="1px" borderColor={borderColor}>
+              <Icon as={MdSearch} color="gray.400" />
+              <Input
+                variant="unstyled"
+                px={2}
+                py={2}
+                placeholder="Search product..."
+                value={productName}
+                onChange={handleProductNameChange}
+              />
+            </Flex>
+          </FormControl>
+
+          {suggestions?.length > 0 && productName && (
             <Box 
+              position="absolute" 
+              top="100%" 
+              left={0} 
+              right={0} 
+              zIndex={10} 
+              bg={dropdownBg}
               border="1px" 
-              borderColor="gray.200" 
+              borderColor={borderColor} 
               borderRadius="md" 
               maxH="200px" 
-              overflowY="auto"
-              mb={2}
+              overflowY="auto" 
+              shadow="md"
             >
               <List>
                 {suggestions.map((product) => (
                   <ListItem 
                     key={product._id} 
-                    p={2} 
-                    _hover={{ bg: 'gray.100' }}
+                    p={3} 
+                    _hover={{ bg: hoverBg }}
                     onClick={() => handleSuggestionClick(product)}
                     cursor="pointer"
+                    display="flex"
+                    justifyContent="space-between"
                   >
-                    {product.name} (Current: {product.quantity})
+                    <Text fontWeight="500">{product.name}</Text>
+                    <Text color="gray.500" fontSize="sm">Stock: {product.quantity}</Text>
                   </ListItem>
                 ))}
               </List>
             </Box>
           )}
+        </Box>
 
+        <FormControl mb={6}>
+          <FormLabel fontWeight="600">Output Quantity</FormLabel>
           <Input
-            placeholder="Enter output quantity"
+            placeholder="e.g. 5"
             value={outputQuantity}
             onChange={(e) => setOutputQuantity(e.target.value)}
             type="number"
             min="1"
-            mb={2}
+            bg={inputBg}
           />
+        </FormControl>
 
-          <Button 
-            onClick={handleSubtractQuantity} 
-            colorScheme="red"
-            isLoading={isLoading}
-            loadingText="Processing..."
-            width="full"
-          >
-            Record Output
-          </Button>
-        </Box>
-      </Flex>
-      <Footer />
-    </Flex>
+        <Button 
+          onClick={handleSubtractQuantity} 
+          colorScheme="red"
+          size="lg"
+          isLoading={isLoading}
+          loadingText="Processing..."
+          width="full"
+        >
+          Record Output 
+        </Button>
+      </Box>
+    </Box>
   );
 }
 

@@ -2,15 +2,20 @@ export const API_BASE = 'http://localhost:3001/api/v1';
 
 const apiRequest = async (endpoint, method, data = null) => {
   const url = `${API_BASE}${endpoint}`;
+  const isFormData = data instanceof FormData;
   const config = {
     method,
     headers: {
-      'Content-Type': 'application/json',
       'Authorization': `Bearer ${localStorage.getItem('token')}`,
     },
   };
+
+  if (!isFormData) {
+    config.headers['Content-Type'] = 'application/json';
+  }
+
   if (data) {
-    config.body = JSON.stringify(data);
+    config.body = isFormData ? data : JSON.stringify(data);
   }
 
   try {

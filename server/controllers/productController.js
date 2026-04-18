@@ -1,5 +1,6 @@
 const { Product } = require('../models/Product');
 const { Category } = require('../models/Category');
+const { Transaction } = require('../models/Transaction');
 const mongoose = require('mongoose');
 
 // @desc   Add a new product
@@ -8,6 +9,7 @@ const mongoose = require('mongoose');
 exports.createProduct = async (req, res) => {
   try {
     const { name, description, image, quantity, categoryId } = req.body;
+    const imageUrl = req.file ? req.file.path : image;
 
     if (!mongoose.Types.ObjectId.isValid(categoryId)) {
       return res.status(400).json({ message: 'Invalid category ID format' });
@@ -21,7 +23,7 @@ exports.createProduct = async (req, res) => {
     const product = await Product.create({
       name,
       description,
-      image,
+      image: imageUrl,
       quantity,
       category: categoryId
     });
@@ -53,7 +55,7 @@ exports.searchProducts = async (req, res) => {
   try {
     const query = req.query.name || '';
     const products = await Product.find({ name: new RegExp(query, 'i') });
-    res.status(200).json(products);
+    res.status(200).json({ success: true, count: products.length, data: products });
   } catch (error) {
     res.status(500).json({ message: 'Error searching products', error: error.message });
   }
@@ -68,7 +70,7 @@ exports.getProductById = async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
-    res.status(200).json(product);
+    res.status(200).json({ success: true, data: product });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching product', error: error.message });
   }
@@ -80,10 +82,11 @@ exports.getProductById = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { name, description, image, quantity, category } = req.body;
+    const imageUrl = req.file ? req.file.path : image;
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      { name, description, image, quantity, category },
+      { name, description, image: imageUrl, quantity, category },
       { new: true, runValidators: true }
     );
 
@@ -159,12 +162,18 @@ exports.updateProductQuantity = async (req, res) => {
     }], { session });
 
     await session.commitTransaction();
-    res.json({ 
+    res.status(200).json({ 
+      success: true,
       message: `Product quantity ${operation}ed successfully.`, 
-      product 
+      data: {
+        product,
+        transaction: transaction[0]
+      }
     });
   } catch (error) {
-    await session.abortTransaction();
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     res.status(500).json({ 
       error: 'Error updating quantity', 
       details: error.message 

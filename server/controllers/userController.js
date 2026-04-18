@@ -56,8 +56,8 @@ const registerUser = async (req, res, next) => {
 
 const loginUser = async (req, res, next) => {
   try {
-    const { email, password ,role } = req.body;
-    if (!email || !password || !role)
+    const { email, password } = req.body;
+    if (!email || !password)
       return res.status(400).json({ message: 'Email and password required.' });
 
     const user = await User.findOne({ email });
@@ -68,7 +68,11 @@ const loginUser = async (req, res, next) => {
       return res.status(403).json({ message: 'Verify your account first.' });
 
     const token = signToken(user);
-    res.status(200).json({ token, data: { id: user._id, username: user.username, email, role: user.role } ,success:true });
+    res.status(200).json({ 
+      success: true,
+      token, 
+      data: { id: user._id, username: user.username, email, role: user.role } 
+    });
   } catch (err) {
     next(err);
   }

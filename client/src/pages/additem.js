@@ -5,35 +5,45 @@ import {
   Input, 
   InputLeftAddon, 
   Button, 
-  Flex, 
   Box, 
   useColorModeValue,
   useToast,
   Select,
   Text,
   Spinner,
-  Center
+  Center,
+  Heading,
+  FormControl,
+  FormLabel,
+  InputLeftElement,
+  Icon,
+  SimpleGrid,
+  Image,
+  VStack,
+  IconButton
 } from '@chakra-ui/react';
-import Header from '../components/layout/Header';
-import Sidebar from '../components/layout/Sidebar';
-import Footer from '../components/layout/Footer';
+import { MdAdd, MdImage, MdDescription, MdOutlineCategory, MdInventory, MdDelete } from 'react-icons/md';
 import { productService, categoryService } from '../components/utils/api';
 import Auth from '../components/utils/auth';
 import { useNavigate } from 'react-router-dom';
 
 function AddItem() {
-  const bg = useColorModeValue('gray.100', 'gray.800');
-  const color = useColorModeValue('gray.700', 'gray.200');
+  const cardBg = useColorModeValue('white', 'gray.700');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const headerTextCol = useColorModeValue('gray.800', 'white');
+  const inputBg = useColorModeValue('gray.50', 'gray.600');
   const toast = useToast();
   const navigate = useNavigate();
 
   const [inputValues, setInputValues] = useState({
     name: '',
     description: '',
-    image: '',
     quantity: '',
     categoryId: '',
   });
+
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
 
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -71,17 +81,47 @@ function AddItem() {
     }));
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: 'File too large',
+          description: 'Maximum size is 5MB',
+          status: 'warning',
+          duration: 3000,
+        });
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+  };
+
   const handleAddItem = async () => {
     setLoading(true);
 
     try {
-      const productData = {
-        ...inputValues,
-        quantity: parseInt(inputValues.quantity),
-        category: inputValues.categoryId
-      };
+      const formData = new FormData();
+      formData.append('name', inputValues.name);
+      formData.append('description', inputValues.description);
+      formData.append('quantity', inputValues.quantity);
+      formData.append('categoryId', inputValues.categoryId);
+      
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
 
-      const response = await productService.create(productData);
+      await productService.create(formData);
       
       toast({
         title: 'Success',
@@ -95,10 +135,11 @@ function AddItem() {
       setInputValues({
         name: '',
         description: '',
-        image: '',
         quantity: '',
         categoryId: '',
       });
+      setImageFile(null);
+      setImagePreview('');
 
       // Redirect to inventory after 1 second
       setTimeout(() => {
@@ -128,72 +169,64 @@ function AddItem() {
   };
 
   return (
-    <Flex direction="column" minHeight="100vh">
-      <Header />
-      <Flex as="main" flex="1" p={4}>
-        <Sidebar />
-        <Box 
-          flex="1" 
-          ml={{ base: 0, md: 4 }} 
-          p={5} 
-          bg={bg} 
-          borderRadius="md" 
-          color={color}
-          boxShadow="sm"
-        >
-          <Stack spacing={4}>
-            <InputGroup>
-              <InputLeftAddon width="150px">Name</InputLeftAddon>
+    <Box>
+      <Heading size="lg" mb={6} color={headerTextCol}>
+        Add New Product
+      </Heading>
+      
+      <Box 
+        bg={cardBg} 
+        borderRadius="xl" 
+        shadow="sm" 
+        border="1px" 
+        borderColor={borderColor} 
+        p={8} 
+        maxW="800px" 
+        mx="auto"
+      >
+        <Stack spacing={6}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+            <FormControl isRequired>
+              <FormLabel fontWeight="600">Product Name</FormLabel>
               <Input
-                placeholder="Item name"
+                placeholder="Product name"
                 value={inputValues.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                isRequired
+                bg={inputBg}
               />
-            </InputGroup>
+            </FormControl>
 
-            <InputGroup>
-              <InputLeftAddon width="150px">Description</InputLeftAddon>
-              <Input
-                placeholder="Item description"
-                value={inputValues.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-              />
-            </InputGroup>
+            <FormControl isRequired>
+              <FormLabel fontWeight="600">Initial Quantity</FormLabel>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none" children={<Icon as={MdInventory} color="gray.400" />} />
+                <Input
+                  placeholder="e.g. 100"
+                  type="number"
+                  min="0"
+                  value={inputValues.quantity}
+                  onChange={(e) => handleInputChange('quantity', e.target.value)}
+                  bg={inputBg}
+                />
+              </InputGroup>
+            </FormControl>
+          </SimpleGrid>
 
-            <InputGroup>
-              <InputLeftAddon width="150px">Image URL</InputLeftAddon>
-              <Input
-                placeholder="Image URL"
-                value={inputValues.image}
-                onChange={(e) => handleInputChange('image', e.target.value)}
-              />
-            </InputGroup>
-
-            <InputGroup>
-              <InputLeftAddon width="150px">Quantity</InputLeftAddon>
-              <Input
-                placeholder="Enter quantity"
-                type="number"
-                min="0"
-                value={inputValues.quantity}
-                onChange={(e) => handleInputChange('quantity', e.target.value)}
-                isRequired
-              />
-            </InputGroup>
-
-            <InputGroup>
-              <InputLeftAddon width="150px">Category</InputLeftAddon>
-              {categoriesLoading ? (
-                <Center flex="1">
-                  <Spinner size="sm" />
-                </Center>
-              ) : (
+          <FormControl isRequired>
+            <FormLabel fontWeight="600">Category</FormLabel>
+            {categoriesLoading ? (
+              <Center py={2}>
+                <Spinner size="sm" />
+              </Center>
+            ) : (
+              <InputGroup>
+                <InputLeftElement pointerEvents="none" children={<Icon as={MdOutlineCategory} color="gray.400" />} />
                 <Select
                   placeholder="Select a category"
                   value={inputValues.categoryId}
                   onChange={(e) => handleInputChange('categoryId', e.target.value)}
-                  isRequired
+                  bg={inputBg}
+                  pl={10}
                 >
                   {categories.map((category) => (
                     <option key={category._id} value={category._id}>
@@ -201,31 +234,83 @@ function AddItem() {
                     </option>
                   ))}
                 </Select>
-              )}
-            </InputGroup>
-
-            <Flex justifyContent="center" mt={4}>
-              <Button
-                colorScheme="green"
-                width="150px"
-                onClick={handleAddItem}
-                isLoading={loading}
-                isDisabled={!isFormValid() || loading}
-              >
-                Add Item
-              </Button>
-            </Flex>
-
+              </InputGroup>
+            )}
             {!categoriesLoading && categories.length === 0 && (
-              <Text color="orange.500" textAlign="center">
+              <Text color="orange.500" mt={2} fontSize="sm">
                 No categories available. Please create categories first.
               </Text>
             )}
-          </Stack>
-        </Box>
-      </Flex>
-      <Footer />
-    </Flex>
+          </FormControl>
+
+          <FormControl>
+            <FormLabel fontWeight="600">Description</FormLabel>
+            <InputGroup>
+              <InputLeftElement pointerEvents="none" children={<Icon as={MdDescription} color="gray.400" />} />
+              <Input
+                placeholder="Brief item description"
+                value={inputValues.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                bg={inputBg}
+              />
+            </InputGroup>
+          </FormControl>
+
+          <FormControl>
+            <FormLabel fontWeight="600">Product Image</FormLabel>
+            {imagePreview ? (
+              <VStack align="center" pos="relative" border="1px dashed" borderColor="gray.300" p={4} borderRadius="md">
+                <Image src={imagePreview} maxH="200px" borderRadius="md" alt="Preview" />
+                <IconButton
+                  icon={<MdDelete />}
+                  size="sm"
+                  colorScheme="red"
+                  pos="absolute"
+                  top={2}
+                  right={2}
+                  onClick={removeImage}
+                  aria-label="Remove image"
+                />
+              </VStack>
+            ) : (
+              <Box
+                border="2px dashed"
+                borderColor="gray.300"
+                borderRadius="md"
+                p={8}
+                textAlign="center"
+                cursor="pointer"
+                _hover={{ borderColor: 'brand.500', bg: 'gray.50' }}
+                onClick={() => document.getElementById('image-upload').click()}
+              >
+                <Icon as={MdImage} w={10} h={10} color="gray.400" mb={2} />
+                <Text color="gray.500">Click to upload product image (Max 5MB)</Text>
+                <Input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={handleFileChange}
+                />
+              </Box>
+            )}
+          </FormControl>
+
+          <Button
+            mt={4}
+            size="lg"
+            colorScheme="brand"
+            leftIcon={<MdAdd />}
+            onClick={handleAddItem}
+            isLoading={loading}
+            isDisabled={!isFormValid() || loading}
+            width="full"
+          >
+            Create Product
+          </Button>
+        </Stack>
+      </Box>
+    </Box>
   );
 }
 

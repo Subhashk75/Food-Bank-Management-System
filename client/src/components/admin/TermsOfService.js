@@ -1,71 +1,61 @@
 import React from 'react';
-import { Box, Flex, Text, useColorModeValue } from '@chakra-ui/react'; // Import useColorModeValue
-import Header from '../layout/Header';
-import Sidebar from '../layout/Sidebar';
-import Footer from '../layout/Footer';
+import { Box, Text, useColorModeValue, Heading, VStack } from '@chakra-ui/react';
 
 function TermsOfService() {
-  const bg = useColorModeValue("white", "gray.800");
-  const color = useColorModeValue("gray.700", "gray.200");
-  
-  const fcontstyle = {
-    display: "flex",
-    flexWrap: "wrap",
-    fontSize: "30px"
-  };
-
-  const right = {
-    padding: "25px",
-    flex: "80%"
-  }  
+  const cardBg = useColorModeValue("white", "gray.700");
+  const borderColor = useColorModeValue("gray.200", "gray.600");
+  const textColor = useColorModeValue("gray.600", "gray.300");
+  const headerColor = useColorModeValue('gray.800', 'white');
 
   return (
-    <Flex direction="column" minHeight="100vh">
-      <Header />
+    <Box>
+      <Heading size="lg" mb={6} color={headerColor}>
+        Terms of Service
+      </Heading>
 
-      <Flex as="main" style={fcontstyle} flex="1" p={4}>
-        <Sidebar />
-        <Box style={right} bg={bg} borderRadius="md" flex="1" color={color}> {/* Apply the bg and color */}
-          <Text fontSize="xl" fontWeight="bold">Terms of Service</Text>
-          <Text mt={4}>
-            Welcome to FoodBank. These Terms of Service govern your use of our services. Please read these Terms carefully.
+      <Box bg={cardBg} borderRadius="xl" shadow="sm" border="1px" borderColor={borderColor} p={{ base: 6, md: 10 }}>
+        <VStack spacing={6} align="stretch" maxW="800px">
+          <Text fontSize="lg" color={textColor}>
+            Welcome to FoodBank. These Terms of Service govern your use of our administrative and donor services. Please read these Terms carefully.
           </Text>
-          <Text mt={4}>
-            <strong>1. Acceptance of Terms</strong>
-            <Text mt={2}>
+
+          <Box>
+            <Heading as="h3" size="md" mb={2}>1. Acceptance of Terms</Heading>
+            <Text color={textColor}>
               By accessing or using our services, you agree to be bound by these Terms and our Privacy Policy.
             </Text>
-          </Text>
-          <Text mt={4}>
-            <strong>2. Registration and Account Security</strong>
-            <Text mt={2}>
-              You must provide accurate information when creating an account. You are responsible for maintaining the security of your account.
-            </Text>
-          </Text>
-          <Text mt={4}>
-            <strong>3. Donations and Payments</strong>
-            <Text mt={2}>
-              Donations made through our platform are subject to our Donation Policy. We use Stripe for payment processing.
-            </Text>
-          </Text>
-          <Text mt={4}>
-            <strong>4. Content and Conduct</strong>
-            <Text mt={2}>
-              You must comply with all applicable laws and regulations while using our services.
-            </Text>
-          </Text>
-          <Text mt={4}>
-            <strong>5. Termination</strong>
-            <Text mt={2}>
-              We may terminate or suspend your access to our services at our sole discretion, without prior notice or liability.
-            </Text>
-          </Text>
-          {/* ... other terms ... */}
-        </Box>
-      </Flex>
+          </Box>
 
-      <Footer />
-    </Flex>
+          <Box>
+            <Heading as="h3" size="md" mb={2}>2. Registration and Account Security</Heading>
+            <Text color={textColor}>
+              You must provide accurate information when creating an account. You are solely responsible for maintaining the security of your operational account.
+            </Text>
+          </Box>
+
+          <Box>
+            <Heading as="h3" size="md" mb={2}>3. Donations and Payments</Heading>
+            <Text color={textColor}>
+              Donations made through our platform are subject to our Donation Policy. We utilize secure processors for financial transactions.
+            </Text>
+          </Box>
+
+          <Box>
+            <Heading as="h3" size="md" mb={2}>4. Content and Conduct</Heading>
+            <Text color={textColor}>
+              You must comply with all applicable local and state laws and regulations while using our inventory and distribution services.
+            </Text>
+          </Box>
+
+          <Box>
+            <Heading as="h3" size="md" mb={2}>5. Termination</Heading>
+            <Text color={textColor}>
+              We may terminate or suspend your access to our operational services at our sole discretion, without prior notice or liability, specifically concerning abuse of inventory management.
+            </Text>
+          </Box>
+        </VStack>
+      </Box>
+    </Box>
   );
 }
 

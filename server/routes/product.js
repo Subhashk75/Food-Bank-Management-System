@@ -10,13 +10,16 @@ const {
   updateProductQuantity
 } = require('../controllers/productController');
 
+const { upload } = require('../utils/cloudinary');
+
 const { authMiddleware, authorizeRoles } = require('../utils/auth');
 
 // ✅ Create product (admin only)
 router.post(
   '/',
   authMiddleware,
-  authorizeRoles('admin'),
+  authorizeRoles('admin','staff'),
+  upload.single('image'),
   createProduct
 );
 
@@ -49,6 +52,7 @@ router.put(
   '/:id',
   authMiddleware,
   authorizeRoles('admin'),
+  upload.single('image'),
   updateProduct
 );
 
@@ -56,7 +60,7 @@ router.put(
 router.delete(
   '/:id',
   authMiddleware,
-  authorizeRoles('admin'),
+  authorizeRoles('admin','staff'),
   deleteProduct
 );
 
