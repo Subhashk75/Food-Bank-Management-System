@@ -24,7 +24,7 @@ const sendMail = async (email, verificationCode) => {
           <div style="background: #f8f9fa; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0;">
             ${verificationCode}
           </div>
-          <p>This code will expire in 10 minutes.</p>
+          <p>This code will expire in 5 minutes.</p>
           <p style="font-size: 12px; color: #7f8c8d;">If you didn't request this code, please ignore this email.</p>
         </div>
       `,

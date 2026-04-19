@@ -13,8 +13,16 @@ const userSchema = new Schema({
     type: Boolean,
     default: false
   },
-  Otp: {
+  otp: {
     type: String,
+    default: null
+  },
+  otpExpires: {
+    type: Date,
+    default: null
+  },
+  lastOtpSentAt: {
+    type: Date,
     default: null
   },
   role: {

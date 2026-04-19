@@ -1,82 +1,82 @@
+import axios from 'axios';
+
 export const API_BASE = 'https://food-bank-management-system-1.onrender.com/api/v1';
 
-const apiRequest = async (endpoint, method, data = null) => {
-  const url = `${API_BASE}${endpoint}`;
-  const isFormData = data instanceof FormData;
-  const config = {
-    method,
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('token')}`,
-    },
-  };
+// Create an axios instance
+const api = axios.create({
+  baseURL: API_BASE,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-  if (!isFormData) {
-    config.headers['Content-Type'] = 'application/json';
+// Request interceptor for authorization
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
+  return config;
+});
 
-  if (data) {
-    config.body = isFormData ? data : JSON.stringify(data);
-  }
+// Response interceptor for consistent error handling
+api.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    // Standardize error message extraction
+    const message = error.response?.data?.message || error.message || 'An unexpected error occurred';
+    const status = error.response?.status;
+    
+    console.error(`API Error [${status}]:`, message);
 
-  try {
-    const response = await fetch(url, config);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const error = new Error(errorData.message || `HTTP error! Status: ${response.status}`);
-      error.status = response.status;
-      error.data = errorData;
-      throw error;
-    }
-    return await response.json();
-  } catch (error) {
-    console.error(`API Error (${method} ${endpoint}):`, error);
-    if (error.message.includes('Failed to fetch')) {
-      throw new Error('Server connection failed. Please try again later.');
-    }
-    throw error;
+    // Create a custom error object to be caught by components
+    const enhancedError = new Error(message);
+    enhancedError.status = status;
+    enhancedError.data = error.response?.data;
+    
+    return Promise.reject(enhancedError);
   }
-};
+);
 
 export const authService = {
-  register: (data) => apiRequest('/user/register', 'POST', data),
-  login: (data) => apiRequest('/user/login', 'POST', data),
-  requestOtp: (code) => apiRequest('/user/getOtp', 'POST', code),
+  register: (data) => api.post('/user/register', data),
+  login: (data) => api.post('/user/login', data),
+  requestOtp: (data) => api.post('/user/getOtp', data),
+  checkOtpStatus: (data) => api.post('/user/otp-status', data),
+  verifyLoginOtp: (data) => api.post('/verify-login-otp', data),
 };
 
 export const productService = {
-  create: (data) => apiRequest('/product', 'POST', data),
-  getAll: () => apiRequest('/product', 'GET'),
-  getById: (id) => apiRequest(`/product/${id}`, 'GET'),
-  search: (query) => apiRequest(`/product/search?name=${encodeURIComponent(query)}`, 'GET'),
-  update: (id, data) => apiRequest(`/product/${id}`, 'PUT', data),
-  delete: (id) => apiRequest(`/product/${id}`, 'DELETE'),
-  updateQuantity: (id, data) => apiRequest(`/product/${id}/quantity`, 'PATCH', data),
+  create: (data) => api.post('/product', data),
+  getAll: () => api.get('/product'),
+  getById: (id) => api.get(`/product/${id}`),
+  search: (query) => api.get(`/product/search?name=${encodeURIComponent(query)}`),
+  update: (id, data) => api.put(`/product/${id}`, data),
+  delete: (id) => api.delete(`/product/${id}`),
+  updateQuantity: (id, data) => api.patch(`/product/${id}/quantity`, data),
 };
 
 export const distributionService = {
-  // getAll: () => apiRequest('/distribution', 'GET'),
-  create: (data) => apiRequest('/distribution', 'POST', data),
-  // update: (id, data) => apiRequest(`/distribution/${id}`, 'PUT', data),
-  // restore: () => apiRequest('/distribution/restore', 'POST'), // Added this
+  create: (data) => api.post('/distribution', data),
 };
 
 export const transactionService = {
-  getAll: () => apiRequest('/transaction', 'GET'),
-  getById: (id) => apiRequest(`/transaction/${id}`, 'GET'),
-  create: (data) => apiRequest('/transaction', 'POST', data),
-  update: (id, data) => apiRequest(`/transaction/${id}`, 'PUT', data),
-  restore: () => apiRequest('/transaction/restore', 'POST'), // Keeping this too
+  getAll: () => api.get('/transaction'),
+  getById: (id) => api.get(`/transaction/${id}`),
+  create: (data) => api.post('/transaction', data),
+  update: (id, data) => api.put(`/transaction/${id}`, data),
+  restore: () => api.post('/transaction/restore'),
 };
 
 export const categoryService = {
-  getAll: () => apiRequest('/categories', 'GET'),
-  create: (data) => apiRequest('/categories', 'POST', data),
+  getAll: () => api.get('/categories'),
+  create: (data) => api.post('/categories', data),
 };
 
 export const inventoryService = {
-  getAll: () => apiRequest('/inventory', 'GET'),
-  create: (data) => apiRequest('/inventory', 'POST', data),
-  receive: (data) => apiRequest('/inventory/receive', 'POST', data),
+  getAll: () => api.get('/inventory'),
+  create: (data) => api.post('/inventory', data),
+  receive: (data) => api.post('/inventory/receive', data),
 };
 
 export default {
